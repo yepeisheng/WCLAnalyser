@@ -33,7 +33,7 @@ with open(target_dir+"/ranking.txt", "w") as rankingFile:
     rankingFile.write("report_id,fight_id,player_id,fight_start,fight_end,chaos_strike,annihilation,agility,mastery,critical,haste,ver,with_eoc\n")
     count = 0
     page = 0
-    while count < 200:
+    while count < 10:
         page+=1
         Goroth_DH_dps_rank_var["page"] = page
         rankings = Fetcher.fetch_ranking(Goroth_DH_dps_rank_var)["rankings"]
@@ -60,12 +60,14 @@ with open(target_dir+"/ranking.txt", "w") as rankingFile:
                     damages = Fetcher.fetch_table(reportID, "damage-done", fight_start, fight_end, player_id)
                     ability_crit = Inspector.extract_actual_criti(damages, DH_ability_crit)
 
-                    #Generate output
-                    outputline = reportID+",%d,%d,%d,%d,%f,%f,%d,%d,%d,%d,%d,%d\n" % \
-                                          (fightID, player_id, fight_start, fight_end,
-                                           ability_crit["Chaos Strike"], ability_crit["Annihilation"],
-                                           player_stats["agility"], player_stats["mastery"], player_stats["critical"],
-                                           player_stats["haste"], player_stats["ver"], player_stats["with_eoc"])
+                    if not ability_crit == None:
+                        #Generate output
+                        outputline = reportID+",%d,%d,%d,%d,%f,%f,%d,%d,%d,%d,%d,%d\n" % \
+                                              (fightID, player_id, fight_start, fight_end,
+                                               ability_crit["Chaos Strike"], ability_crit["Annihilation"],
+                                               player_stats["agility"], player_stats["mastery"], player_stats["critical"],
+                                               player_stats["haste"], player_stats["ver"], player_stats["with_eoc"])
 
-                    print outputline
-                    rankingFile.write(outputline)
+                        print outputline
+                        rankingFile.write(outputline)
+                        count+=1

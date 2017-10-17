@@ -69,7 +69,10 @@ def extract_player_stats(events):
 
 def extract_actual_criti(table_entries, ability_names):
     result = ability_names.copy()
-    for entry in table_entries:
-        if entry["name"] in result:
-            result[entry["name"]] = (1.0 * entry["critHitCount"])/entry["hitCount"]
+    try:
+        for entry in table_entries:
+            if entry["name"] in result:
+                result[entry["name"]] = (1.0 * entry["critHitCount"])/entry["hitCount"]
+    except Exception:
+        result = None
     return result
