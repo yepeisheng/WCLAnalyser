@@ -52,6 +52,7 @@ def extract_eyeofcommand(statsEvent):
 
 
 def extract_player_stats(events):
+    base_stats = None
     for event in events:
         if event["type"] == "combatantinfo":
             eyeofcommand_basis = extract_eyeofcommand(event)

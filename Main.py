@@ -30,10 +30,10 @@ if not os.path.exists(target_dir):
     os.makedirs(target_dir)
 
 with open(target_dir+"/ranking.txt", "w") as rankingFile:
-    rankingFile.write("#, report_id, fight_id, player_id, fight_start, fight_end\n")
+    rankingFile.write("report_id,fight_id,player_id,fight_start,fight_end,chaos_strike,annihilation,agility,mastery,critical,haste,ver,with_eoc\n")
     count = 0
     page = 0
-    while count < 3000:
+    while count < 200:
         page+=1
         Goroth_DH_dps_rank_var["page"] = page
         rankings = Fetcher.fetch_ranking(Goroth_DH_dps_rank_var)["rankings"]
@@ -45,42 +45,27 @@ with open(target_dir+"/ranking.txt", "w") as rankingFile:
                 playerName = dh["name"]
                 fights, friendlies = Fetcher.fetch_fights(reportID)
                 fight, player = Inspector.extract_player_fight(fights, friendlies, fightID, playerName)
-                #Extra fight data
+
+                #Take parameters in the fight data
                 fight_start = fight["start_time"]
                 fight_end = fight["end_time"]
                 player_id = player["id"]
-                #Generate output
-                outputline = str(count)+", "+reportID+", "+str(fightID)+", "+str(player_id)+", "+str(fight_start)+", "+str(fight_end)+"\n"
-                print outputline
-                rankingFile.write(outputline)
-                count+=1
 
+                #Fetch player's stats
+                events = Fetcher.fetch_events(reportID,  fight_start, fight_end, player_id)
+                player_stats = Inspector.extract_player_stats(events)
 
-for dh in range(0,0):
-    reportID = dh["reportID"]
-    fightID = dh["fightID"]
-    playerName = dh["name"]
+                if not player_stats == None:
+                    #Fetch Chaos Strike and Annihilation's actual critical
+                    damages = Fetcher.fetch_table(reportID, "damage-done", fight_start, fight_end, player_id)
+                    ability_crit = Inspector.extract_actual_criti(damages, DH_ability_crit)
 
-    with open("test/fight.json", "w") as fightFile:
-        json.dump(dh, fightFile, indent=4)
+                    #Generate output
+                    outputline = reportID+",%d,%d,%d,%d,%f,%f,%d,%d,%d,%d,%d,%d\n" % \
+                                          (fightID, player_id, fight_start, fight_end,
+                                           ability_crit["Chaos Strike"], ability_crit["Annihilation"],
+                                           player_stats["agility"], player_stats["mastery"], player_stats["critical"],
+                                           player_stats["haste"], player_stats["ver"], player_stats["with_eoc"])
 
-    fights, friendlies = Fetcher.fetch_fights(reportID)
-    fight, player = Inspector.extract_player_fight(fights, friendlies, fightID, playerName)
-
-    events = Fetcher.fetch_events(reportID,  fight["start_time"], fight["end_time"], player["id"])
-    with open("test/events.json", "w") as eventfile:
-        json.dump(events, eventfile, indent=4)
-
-    palyer_stats = Inspector.extract_player_stats(events)
-    with open("test/stats.json", "w") as statsFile:
-        json.dump(palyer_stats, statsFile, indent=4)
-
-    damages = Fetcher.fetch_table(reportID, "damage-done", fight["start_time"], fight["end_time"], player["id"])
-    with open("test/damages.json", "w") as damagesFile:
-        json.dump(damages, damagesFile, indent=4)
-
-    ability_crit = Inspector.extract_actual_criti(damages, DH_ability_crit)
-    with open("test/ability.json", "w") as abilityFile:
-        json.dump(ability_crit, abilityFile, indent=4)
-
-
+                    print outputline
+                    rankingFile.write(outputline)
